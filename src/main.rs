@@ -2,7 +2,6 @@ use board::SudokuBoard;
 
 mod board;
 mod cell;
-mod super_script;
 
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();

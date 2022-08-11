@@ -40,67 +40,79 @@ impl SudokuBoard {
     }
 }
 
-macro_rules! print_board {
-    ($f:ident, $rows:ident) => {
-        writeln!($f, "╔═══a═══╤═══b═══╤═══c═══╦═══d═══╤═══e═══╤═══f═══╦═══g═══╤═══h═══╤═══i═══╗")?;
-        print_board!($f, 1, $rows[0], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢")?;
-        print_board!($f, 2, $rows[1], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢")?;
-        print_board!($f, 3, $rows[2], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╠═══════╪═══════╪═══════╬═══════╪═══════╪═══════╬═══════╪═══════╪═══════╣")?;
-        print_board!($f, 4, $rows[3], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢")?;
-        print_board!($f, 5, $rows[4], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢")?;
-        print_board!($f, 6, $rows[5], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╠═══════╪═══════╪═══════╬═══════╪═══════╪═══════╬═══════╪═══════╪═══════╣")?;
-        print_board!($f, 7, $rows[6], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢")?;
-        print_board!($f, 8, $rows[7], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢")?;
-        print_board!($f, 9, $rows[8], (0, 1, 2), (3, 4, 5), (6, 7, 8));
-        writeln!($f, "╚═══════╧═══════╧═══════╩═══════╧═══════╧═══════╩═══════╧═══════╧═══════╝")?;
-    };
-    ($f:ident, $i:literal, $row:expr, $(($x:literal, $y:literal, $z:literal)),*) => {
-        $(
-            writeln!(
-                $f,
-                "{} {} │ {} │ {} ║ {} │ {} │ {} ║ {} │ {} │ {} ║",
-                if $x == 3 { format!("{}", $i) } else { "║".to_string() },
-                print_board!($row, $x, $y, $z, 0),
-                print_board!($row, $x, $y, $z, 1),
-                print_board!($row, $x, $y, $z, 2),
-                print_board!($row, $x, $y, $z, 3),
-                print_board!($row, $x, $y, $z, 4),
-                print_board!($row, $x, $y, $z, 5),
-                print_board!($row, $x, $y, $z, 6),
-                print_board!($row, $x, $y, $z, 7),
-                print_board!($row, $x, $y, $z, 8),
-            )?;
-        )*
-    };
-
-    ($row:expr, $x:literal, $y:literal, $z:literal, $i:literal) => {
-        if $row[$i].value == Value::None {
-            format!(
-                "{} {} {}",
-                $row[$i].possible_values[$x].sup_str(),
-                $row[$i].possible_values[$y].sup_str(),
-                $row[$i].possible_values[$z].sup_str()
-            )
-        } else if $x == 3 {
-            format!("  {}  ", $row[$i].value)
+fn print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt::Result {
+    for (val_off1, val_off2, val_off3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
+        let border = if val_off1 == 3 {
+            format!("{}", i)
         } else {
-            "     ".to_string()
+            "║".to_string()
+        };
+
+        write!(f, "{border}")?;
+
+        for (row1, row2, row3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
+            write!(
+                f,
+                " {} │ {} │ {} ║",
+                row[row1].get_print_row_values(val_off1, val_off2, val_off3),
+                row[row2].get_print_row_values(val_off1, val_off2, val_off3),
+                row[row3].get_print_row_values(val_off1, val_off2, val_off3)
+            )?;
         }
+        writeln!(f)?;
+    }
+
+    Ok(())
+}
+
+macro_rules! border {
+    ($f:ident, head) => {
+        writeln!(
+            $f,
+            "╔═══a═══╤═══b═══╤═══c═══╦═══d═══╤═══e═══╤═══f═══╦═══g═══╤═══h═══╤═══i═══╗"
+        )?;
+    };
+    ($f:ident, thin) => {
+        writeln!(
+            $f,
+            "╟───────┼───────┼───────╫───────┼───────┼───────╫───────┼───────┼───────╢"
+        )?;
+    };
+    ($f:ident, thick) => {
+        writeln!(
+            $f,
+            "╠═══════╪═══════╪═══════╬═══════╪═══════╪═══════╬═══════╪═══════╪═══════╣"
+        )?;
+    };
+    ($f:ident, tail) => {
+        writeln!(
+            $f,
+            "╚═══════╧═══════╧═══════╩═══════╧═══════╧═══════╩═══════╧═══════╧═══════╝"
+        )?;
     };
 }
 
 impl Display for SudokuBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let rows = self.0;
-        print_board!(f, rows);
+        border!(f, head);
+        print_row(f, 1, self.0[0])?;
+        border!(f, thin);
+        print_row(f, 2, self.0[1])?;
+        border!(f, thin);
+        print_row(f, 3, self.0[2])?;
+        border!(f, thick);
+        print_row(f, 4, self.0[3])?;
+        border!(f, thin);
+        print_row(f, 5, self.0[4])?;
+        border!(f, thin);
+        print_row(f, 6, self.0[5])?;
+        border!(f, thick);
+        print_row(f, 7, self.0[6])?;
+        border!(f, thin);
+        print_row(f, 8, self.0[7])?;
+        border!(f, thin);
+        print_row(f, 9, self.0[8])?;
+        border!(f, tail);
         Ok(())
     }
 }

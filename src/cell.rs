@@ -71,6 +71,27 @@ impl Cell {
             ],
         }
     }
+
+    pub fn get_print_row_values(
+        &self,
+        val_off1: usize,
+        val_off2: usize,
+        val_off3: usize,
+    ) -> String {
+        if self.value == Value::None {
+            format!(
+                "{} {} {}",
+                self.possible_values[val_off1].sup_str(),
+                self.possible_values[val_off2].sup_str(),
+                self.possible_values[val_off3].sup_str()
+            )
+        } else if val_off1 == 3 {
+            // print the value if on the middle row
+            format!("  {}  ", self.value)
+        } else {
+            "     ".to_string()
+        }
+    }
 }
 
 impl From<Value> for Cell {
