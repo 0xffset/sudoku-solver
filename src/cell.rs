@@ -32,6 +32,7 @@ impl Display for Value {
 }
 
 impl Value {
+    /// Returns the value as super script representation.
     pub fn sup_str(&self) -> &'static str {
         match self {
             Value::One => "¹",
@@ -88,6 +89,7 @@ pub struct Cell {
 }
 
 impl Cell {
+    /// Creates a new emmpty cell with all values being possible.
     pub fn new() -> Self {
         Cell {
             value: Value::None,
@@ -105,7 +107,9 @@ impl Cell {
         }
     }
 
-    pub fn get_print_row_values(
+    /// Returns a string representation of the possible values val_off1 through val_off3. <br>
+    /// ! <b>This function is used for printing the board and might be removed in the future !</b>
+    pub fn __get_print_row_values(
         &self,
         val_off1: usize,
         val_off2: usize,
@@ -126,12 +130,18 @@ impl Cell {
         }
     }
 
+    /// Removes the value from the possible values.
     pub fn remove_possible_value(&mut self, val: Value) {
-        self.possible_values[val.to_usize() - 1] = Value::None;
+        if val != Value::None {
+            self.possible_values[val.to_usize() - 1] = Value::None;
+        }
     }
 
+    /// Adds the value to the possible values.
     pub fn add_possible_value(&mut self, val: Value) {
-        self.possible_values[val.to_usize() - 1] = val;
+        if val != Value::None {
+            self.possible_values[val.to_usize() - 1] = val;
+        }
     }
 }
 

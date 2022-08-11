@@ -1,11 +1,16 @@
 use std::fmt::Display;
 
-use crate::cell::{Cell, Value};
+use crate::{
+    cell::{Cell, Value},
+    results::{AddResult, ChangeResult, RemoveResult},
+};
 
 /// SudokuBoard.0\[row]\[col]
 pub struct SudokuBoard([[Cell; 9]; 9]);
 
 impl SudokuBoard {
+    /// Creates a new sudoku board from a vector of strings, where each string is a row of the board. <br>
+    /// If the vector is empty, a blank board is created.
     pub fn new<S: AsRef<str>>(lines: Vec<S>) -> Self {
         if lines.len() > 9 {
             panic!("Input file must have a maximum of 9 lines");
@@ -26,49 +31,71 @@ impl SudokuBoard {
         sudoku_board
     }
 
-    /// row and col bounds are 1..=9
-    pub fn add<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) {
+    /// Adds a value to the board. <br>
+    /// `row` and `col` bounds are 1..=9.
+    pub fn add<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) -> AddResult {
         let v = Value::from(val);
         let row = row - 1;
         let col = col - 1;
 
-        if v != Value::None && self.0[row][col].value == Value::None {
-            if self.0[row][col].possible_values.contains(&v) {
-                self.0[row][col].value = v;
-                self.0[row][col].remove_possible_value(v);
+        // don't overwrite existing values and don't set to None
+        if v != Value::None {
+            if self.0[row][col].value == Value::None {
+                // don't set value if not possible
+                if self.0[row][col].possible_values.contains(&v) {
+                    self.0[row][col].value = v;
+                    self.0[row][col].remove_possible_value(v);
 
-                for i in 0..9 {
-                    self.0[i][col].remove_possible_value(v);
-                    self.0[row][i].remove_possible_value(v);
-                }
-                let row_off = row / 3;
-                let col_off = col / 3;
-                for row_count in 0..3 {
-                    for col_count in 0..3 {
-                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
-                            .remove_possible_value(v);
-                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
-                            .remove_possible_value(v);
+                    // update rows and cols
+                    for i in 0..9 {
+                        self.0[i][col].remove_possible_value(v);
+                        self.0[row][i].remove_possible_value(v);
                     }
+
+                    // update 3x3 square
+                    let row_off = row / 3;
+                    let col_off = col / 3;
+                    for row_count in 0..3 {
+                        for col_count in 0..3 {
+                            self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                                .remove_possible_value(v);
+                            self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                                .remove_possible_value(v);
+                        }
+                    }
+
+                    return AddResult::Added(v);
                 }
+
+                return AddResult::NotPossible;
             }
+
+            return AddResult::AlreadySet;
         }
+
+        AddResult::NoneValue
     }
 
-    /// row and col bounds are 1..=9
-    pub fn remove(&mut self, row: usize, col: usize) -> Value {
+    /// Removes a value from the board. <br>
+    /// row and col bounds are 1..=9.
+    pub fn remove(&mut self, row: usize, col: usize) -> RemoveResult {
         let row = row - 1;
         let col = col - 1;
 
+        // don't remove if value is None
         if self.0[row][col].value != Value::None {
+            // clear value and add it to possible values
             let v = self.0[row][col].value;
             self.0[row][col].value = Value::None;
             self.0[row][col].add_possible_value(v);
 
+            // update rows and cols
             for i in 0..9 {
                 self.0[i][col].add_possible_value(v);
                 self.0[row][i].add_possible_value(v);
             }
+
+            // update 3x3 square
             let row_off = row / 3;
             let col_off = col / 3;
             for row_count in 0..3 {
@@ -78,24 +105,33 @@ impl SudokuBoard {
                 }
             }
 
-            return v;
+            return RemoveResult::Removed(v);
         }
 
-        Value::None
+        RemoveResult::NoneValue
     }
 
-    /// row and col bounds are 1..=9
-    pub fn change<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) {
-        let v = self.remove(row, col);
-        if v != Value::None {
-            self.add(row, col, v.to_string());
-        } else {
-            self.add(row, col, val);
+    /// Changes the value of a cell. <br>
+    /// row and col bounds are 1..=9.
+    pub fn change<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) -> ChangeResult {
+        match self.remove(row, col) {
+            RemoveResult::Removed(rem_v) => match self.add(row, col, val) {
+                AddResult::Added(add_v) => ChangeResult::Changed(rem_v, add_v),
+                AddResult::AlreadySet | AddResult::NoneValue => panic!("Impossible program state"),
+                AddResult::NotPossible => {
+                    // if adding failed because the new value is not legal, restore the old value
+                    self.add(row, col, rem_v.to_string());
+                    ChangeResult::NotPossible
+                }
+            },
+            RemoveResult::NoneValue => ChangeResult::NoneValue,
         }
     }
 }
 
-fn print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt::Result {
+/// prints a row. <br>
+/// ! <b> This function is used for printing the board and might be removed in the future !</b>
+fn __print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt::Result {
     for (val_off1, val_off2, val_off3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
         let border = if val_off1 == 3 {
             format!("{}", i)
@@ -109,9 +145,9 @@ fn print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt:
             write!(
                 f,
                 " {} │ {} │ {} ║",
-                row[row1].get_print_row_values(val_off1, val_off2, val_off3),
-                row[row2].get_print_row_values(val_off1, val_off2, val_off3),
-                row[row3].get_print_row_values(val_off1, val_off2, val_off3)
+                row[row1].__get_print_row_values(val_off1, val_off2, val_off3),
+                row[row2].__get_print_row_values(val_off1, val_off2, val_off3),
+                row[row3].__get_print_row_values(val_off1, val_off2, val_off3)
             )?;
         }
         writeln!(f)?;
@@ -150,23 +186,23 @@ macro_rules! print_border {
 impl Display for SudokuBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         print_border!(f, head);
-        print_row(f, 1, self.0[0])?;
+        __print_row(f, 1, self.0[0])?;
         print_border!(f, thin);
-        print_row(f, 2, self.0[1])?;
+        __print_row(f, 2, self.0[1])?;
         print_border!(f, thin);
-        print_row(f, 3, self.0[2])?;
+        __print_row(f, 3, self.0[2])?;
         print_border!(f, thick);
-        print_row(f, 4, self.0[3])?;
+        __print_row(f, 4, self.0[3])?;
         print_border!(f, thin);
-        print_row(f, 5, self.0[4])?;
+        __print_row(f, 5, self.0[4])?;
         print_border!(f, thin);
-        print_row(f, 6, self.0[5])?;
+        __print_row(f, 6, self.0[5])?;
         print_border!(f, thick);
-        print_row(f, 7, self.0[6])?;
+        __print_row(f, 7, self.0[6])?;
         print_border!(f, thin);
-        print_row(f, 8, self.0[7])?;
+        __print_row(f, 8, self.0[7])?;
         print_border!(f, thin);
-        print_row(f, 9, self.0[8])?;
+        __print_row(f, 9, self.0[8])?;
         print_border!(f, tail);
         Ok(())
     }
