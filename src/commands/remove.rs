@@ -38,6 +38,9 @@ impl Command for RemoveCommand {
             RemoveResult::NoneValue => {
                 return CommandResult::RemoveCommandNoneValue;
             }
+            RemoveResult::Immutable => {
+                return CommandResult::RemoveCommandImmutable;
+            }
         }
     }
 }

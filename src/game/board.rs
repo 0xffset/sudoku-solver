@@ -26,6 +26,7 @@ impl SudokuBoard {
 
             for (col, &c) in line_split.iter().enumerate() {
                 sudoku_board.add(row + 1, col + 1, c.trim());
+                sudoku_board.0[row][col].set_immutable();
             }
         }
 
@@ -83,33 +84,40 @@ impl SudokuBoard {
         let row = row - 1;
         let col = col - 1;
 
-        // don't remove if value is None
-        if self.0[row][col].value != Value::None {
-            // clear value and add it to possible values
-            let v = self.0[row][col].value;
-            self.0[row][col].value = Value::None;
-            self.0[row][col].add_possible_value(v);
+        // don't remove if value is immutable (start value)
+        if self.0[row][col].mutable {
+            // don't remove if value is None
+            if self.0[row][col].value != Value::None {
+                // clear value and add it to possible values
+                let v = self.0[row][col].value;
+                self.0[row][col].value = Value::None;
+                self.0[row][col].add_possible_value(v);
 
-            // update rows and cols
-            for i in 0..9 {
-                self.0[i][col].add_possible_value(v);
-                self.0[row][i].add_possible_value(v);
-            }
-
-            // update 3x3 square
-            let row_off = row / 3;
-            let col_off = col / 3;
-            for row_count in 0..3 {
-                for col_count in 0..3 {
-                    self.0[row_off * 3 + row_count][col_off * 3 + col_count].add_possible_value(v);
-                    self.0[row_off * 3 + row_count][col_off * 3 + col_count].add_possible_value(v);
+                // update rows and cols
+                for i in 0..9 {
+                    self.0[i][col].add_possible_value(v);
+                    self.0[row][i].add_possible_value(v);
                 }
-            }
 
-            return RemoveResult::Removed(v);
+                // update 3x3 square
+                let row_off = row / 3;
+                let col_off = col / 3;
+                for row_count in 0..3 {
+                    for col_count in 0..3 {
+                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                            .add_possible_value(v);
+                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                            .add_possible_value(v);
+                    }
+                }
+
+                return RemoveResult::Removed(v);
+            }
+            
+            return RemoveResult::NoneValue;
         }
 
-        RemoveResult::NoneValue
+        RemoveResult::Immutable
     }
 
     /// Changes the value of a cell. <br>
@@ -126,6 +134,7 @@ impl SudokuBoard {
                 }
             },
             RemoveResult::NoneValue => ChangeResult::NoneValue,
+            RemoveResult::Immutable => ChangeResult::Immutable,
         }
     }
 

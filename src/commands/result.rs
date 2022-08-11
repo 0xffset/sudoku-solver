@@ -10,8 +10,10 @@ pub enum CommandResult {
 
     RemoveCommandSuccess(Value, usize, usize),
     RemoveCommandNoneValue,
+    RemoveCommandImmutable,
 
     ChangeCommandSuccess(Value, Value, usize, usize),
     ChangeCommandNoneValue,
     ChangeCommandNotPossible,
+    ChangeCommandImmutable,
 }

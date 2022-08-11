@@ -10,10 +10,12 @@ pub enum AddResult {
 pub enum RemoveResult {
     Removed(Value),
     NoneValue,
+    Immutable,
 }
 
 pub enum ChangeResult {
     Changed(Value, Value),
     NoneValue,
     NotPossible,
+    Immutable,
 }

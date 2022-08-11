@@ -4,6 +4,7 @@ use super::value::Value;
 pub struct Cell {
     pub value: Value,
     pub possible_values: [Value; 9],
+    pub mutable: bool,
 }
 
 impl Cell {
@@ -22,7 +23,13 @@ impl Cell {
                 Value::Eight,
                 Value::Nine,
             ],
+            mutable: true,
         }
+    }
+
+    /// Marks the cell as immutable.
+    pub fn set_immutable(&mut self) {
+        self.mutable = false;
     }
 
     /// Removes the value from the possible values.
@@ -36,15 +43,6 @@ impl Cell {
     pub fn add_possible_value(&mut self, val: Value) {
         if val != Value::None {
             self.possible_values[val.to_usize() - 1] = val;
-        }
-    }
-}
-
-impl From<Value> for Cell {
-    fn from(value: Value) -> Self {
-        Cell {
-            value,
-            possible_values: [Value::None; 9],
         }
     }
 }

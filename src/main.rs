@@ -43,6 +43,13 @@ fn main() -> std::io::Result<()> {
             continue;
         }
 
+        if input == "help" {
+            for command in &commands {
+                println!("- {}\n{}", command.name(), command.usage());
+            }
+            continue;
+        }
+
         for command in &commands {
             if command.name() == input_split[0] {
                 if command.num_args() == input_split.len() - 1 {
@@ -66,6 +73,9 @@ fn main() -> std::io::Result<()> {
                         commands::CommandResult::RemoveCommandNoneValue => {
                             println!("Can't remove an empty cell")
                         }
+                        commands::CommandResult::RemoveCommandImmutable => {
+                            println!("Can't remove an immutable cell")
+                        }
 
                         commands::CommandResult::ChangeCommandSuccess(rem_v, add_v, row, col) => {
                             println!("Changed {rem_v} to {add_v} at {:?}", (row, col));
@@ -76,6 +86,9 @@ fn main() -> std::io::Result<()> {
                         }
                         commands::CommandResult::ChangeCommandNotPossible => {
                             println!("Illegal move")
+                        }
+                        commands::CommandResult::ChangeCommandImmutable => {
+                            println!("Can't change an immutable cell")
                         }
                     }
                 } else {

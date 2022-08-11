@@ -42,6 +42,9 @@ impl Command for ChangeCommand {
             ChangeResult::NotPossible => {
                 return CommandResult::ChangeCommandNotPossible;
             }
+            ChangeResult::Immutable => {
+                return CommandResult::ChangeCommandImmutable;
+            }
         }
     }
 }
