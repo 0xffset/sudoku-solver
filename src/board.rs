@@ -1,8 +1,9 @@
 use std::fmt::Display;
 
 use crate::{
-    cell::{Cell, Value},
+    cell::Cell,
     results::{AddResult, ChangeResult, RemoveResult},
+    value::Value,
 };
 
 /// SudokuBoard.0\[row]\[col]
@@ -160,7 +161,7 @@ macro_rules! print_border {
     ($f:ident, head) => {
         writeln!(
             $f,
-            "╔═══1═══╤═══2═══╤═══3═══╦═══4═══╤═══5═══╤═══6═══╦═══7═══╤═══8═══╤═══9═══╗"
+            "╔══ 1 ══╤══ 2 ══╤══ 3 ══╦══ 4 ══╤══ 5 ══╤══ 6 ══╦══ 7 ══╤══ 8 ══╤══ 9 ══╗"
         )?;
     };
     ($f:ident, thin) => {
@@ -176,7 +177,7 @@ macro_rules! print_border {
         )?;
     };
     ($f:ident, tail) => {
-        writeln!(
+        write!(
             $f,
             "╚═══════╧═══════╧═══════╩═══════╧═══════╧═══════╩═══════╧═══════╧═══════╝"
         )?;

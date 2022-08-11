@@ -2,9 +2,13 @@ use std::io::Write;
 
 use board::SudokuBoard;
 
+use crate::commands::{AddCommand, ChangeCommand, Command, RemoveCommand};
+
 mod board;
 mod cell;
+mod commands;
 mod results;
+mod value;
 
 fn main() -> std::io::Result<()> {
     let args = std::env::args().collect::<Vec<_>>();
@@ -14,6 +18,12 @@ fn main() -> std::io::Result<()> {
     } else {
         SudokuBoard::new(Vec::<String>::new())
     };
+
+    let commands: Vec<Box<dyn Command>> = vec![
+        Box::new(AddCommand {}),
+        Box::new(ChangeCommand {}),
+        Box::new(RemoveCommand {}),
+    ];
 
     println!("{board}");
 
@@ -35,113 +45,46 @@ fn main() -> std::io::Result<()> {
             continue;
         }
 
-        if input_split[0] == "add" {
-            if input_split.len() == 4 {
-                let row = match input_split[1].parse::<usize>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        println!("Usage: `add <row> <col> <val>`");
-                        continue;
-                    }
-                };
-                let col = match input_split[2].parse::<usize>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        println!("Usage: `add <row> <col> <val>`");
-                        continue;
-                    }
-                };
-                let val = input_split[3];
+        for command in &commands {
+            if command.name() == input_split[0] {
+                if command.num_args() == input_split.len() - 1 {
+                    match command.execute(&mut board, input_split[1..].to_vec()) {
+                        commands::CommandResult::ParseError => println!("{}", command.usage()),
 
-                match board.add(row, col, val) {
-                    results::AddResult::Added(v) => {
-                        println!("Added {v} to {:?}", (row, col));
-                    }
-                    results::AddResult::NoneValue => {
-                        println!("Can't add a 0");
-                        continue;
-                    }
-                    results::AddResult::NotPossible => {
-                        println!("Illegal move");
-                        continue;
-                    }
-                    results::AddResult::AlreadySet => {
-                        println!("To change a value, use `change <row> <col> <val>`");
-                        continue;
-                    }
-                }
-            } else {
-                println!("Usage: `add <row> <col> <val>`");
-                continue;
-            }
-        } else if input_split[0] == "remove" {
-            if input_split.len() == 3 {
-                let row = match input_split[1].parse::<usize>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        println!("Usage: `remove <row> <col>`");
-                        continue;
-                    }
-                };
-                let col = match input_split[2].parse::<usize>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        println!("Usage: `remove <row> <col>`");
-                        continue;
-                    }
-                };
+                        commands::CommandResult::AddCommandSuccess(v, row, col) => {
+                            println!("Added {v} to {:?}", (row, col));
+                            println!("{board}");
+                        }
+                        commands::CommandResult::AddCommandNoneValue => println!("Can't add a 0"),
+                        commands::CommandResult::AddCommandNotPossible => println!("Illegal move"),
+                        commands::CommandResult::AddCommandAlreadySet => {
+                            println!("To change a value, use the change command")
+                        }
 
-                match board.remove(row, col) {
-                    results::RemoveResult::Removed(v) => {
-                        println!("Removed {v} from {:?}", (row, col));
-                    }
-                    results::RemoveResult::NoneValue => {
-                        println!("Can't remove an empty cell");
-                        continue;
-                    }
-                }
-            } else {
-                println!("Usage: `remove <row> <col>`");
-                continue;
-            }
-        } else if input_split[0] == "change" {
-            if input_split.len() == 4 {
-                let row = match input_split[1].parse::<usize>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        println!("Usage: `change <row> <col> <val>`");
-                        continue;
-                    }
-                };
-                let col = match input_split[2].parse::<usize>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        println!("Usage: `change <row> <col> <val>`");
-                        continue;
-                    }
-                };
-                let val = input_split[3];
+                        commands::CommandResult::RemoveCommandSuccess(v, row, col) => {
+                            println!("Removed {v} from {:?}", (row, col));
+                            println!("{board}");
+                        }
+                        commands::CommandResult::RemoveCommandNoneValue => {
+                            println!("Can't remove an empty cell")
+                        }
 
-                match board.change(row, col, val) {
-                    results::ChangeResult::Changed(rem_v, add_v) => {
-                        println!("Changed {rem_v} to {add_v} at {:?}", (row, col));
+                        commands::CommandResult::ChangeCommandSuccess(rem_v, add_v, row, col) => {
+                            println!("Changed {rem_v} to {add_v} at {:?}", (row, col));
+                            println!("{board}");
+                        }
+                        commands::CommandResult::ChangeCommandNoneValue => {
+                            println!("To add a value, use the add command")
+                        }
+                        commands::CommandResult::ChangeCommandNotPossible => {
+                            println!("Illegal move")
+                        }
                     }
-                    results::ChangeResult::NoneValue => {
-                        println!("To add a value, use `add <row> <col> <val>`");
-                        continue;
-                    }
-                    results::ChangeResult::NotPossible => {
-                        println!("Illegal move");
-                        continue;
-                    }
+                } else {
+                    println!("{}", command.usage());
                 }
-            } else {
-                println!("Usage: `change <row> <col> <val>`");
-                continue;
             }
         }
-
-        println!("{board}");
     }
 
     Ok(())
