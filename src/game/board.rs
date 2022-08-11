@@ -128,33 +128,54 @@ impl SudokuBoard {
             RemoveResult::NoneValue => ChangeResult::NoneValue,
         }
     }
-}
 
-/// prints a row. <br>
-/// ! <b> This function is used for printing the board and might be removed in the future !</b>
-fn __print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt::Result {
-    for (val_off1, val_off2, val_off3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
-        let border = if val_off1 == 3 {
-            format!("{}", i)
+    /// Returns a string representation of the possible values of a cell for the values val_off1 through val_off3. <br>
+    fn __get_print_row_values(
+        cell: Cell,
+        val_off1: usize,
+        val_off2: usize,
+        val_off3: usize,
+    ) -> String {
+        if cell.value == Value::None {
+            format!(
+                "{} {} {}",
+                cell.possible_values[val_off1].sup_str(),
+                cell.possible_values[val_off2].sup_str(),
+                cell.possible_values[val_off3].sup_str()
+            )
+        } else if val_off1 == 3 {
+            // print the value if on the middle row
+            format!("  {}  ", cell.value)
         } else {
-            "║".to_string()
-        };
-
-        write!(f, "{border}")?;
-
-        for (row1, row2, row3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
-            write!(
-                f,
-                " {} │ {} │ {} ║",
-                row[row1].__get_print_row_values(val_off1, val_off2, val_off3),
-                row[row2].__get_print_row_values(val_off1, val_off2, val_off3),
-                row[row3].__get_print_row_values(val_off1, val_off2, val_off3)
-            )?;
+            "     ".to_string()
         }
-        writeln!(f)?;
     }
 
-    Ok(())
+    /// prints a row. <br>
+    fn __print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt::Result {
+        for (val_off1, val_off2, val_off3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
+            let border = if val_off1 == 3 {
+                format!("{}", i)
+            } else {
+                "║".to_string()
+            };
+
+            write!(f, "{border}")?;
+
+            for (row1, row2, row3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
+                write!(
+                    f,
+                    " {} │ {} │ {} ║",
+                    SudokuBoard::__get_print_row_values(row[row1], val_off1, val_off2, val_off3),
+                    SudokuBoard::__get_print_row_values(row[row2], val_off1, val_off2, val_off3),
+                    SudokuBoard::__get_print_row_values(row[row3], val_off1, val_off2, val_off3)
+                )?;
+            }
+            writeln!(f)?;
+        }
+
+        Ok(())
+    }
 }
 
 macro_rules! print_border {
@@ -187,23 +208,23 @@ macro_rules! print_border {
 impl Display for SudokuBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         print_border!(f, head);
-        __print_row(f, 1, self.0[0])?;
+        SudokuBoard::__print_row(f, 1, self.0[0])?;
         print_border!(f, thin);
-        __print_row(f, 2, self.0[1])?;
+        SudokuBoard::__print_row(f, 2, self.0[1])?;
         print_border!(f, thin);
-        __print_row(f, 3, self.0[2])?;
+        SudokuBoard::__print_row(f, 3, self.0[2])?;
         print_border!(f, thick);
-        __print_row(f, 4, self.0[3])?;
+        SudokuBoard::__print_row(f, 4, self.0[3])?;
         print_border!(f, thin);
-        __print_row(f, 5, self.0[4])?;
+        SudokuBoard::__print_row(f, 5, self.0[4])?;
         print_border!(f, thin);
-        __print_row(f, 6, self.0[5])?;
+        SudokuBoard::__print_row(f, 6, self.0[5])?;
         print_border!(f, thick);
-        __print_row(f, 7, self.0[6])?;
+        SudokuBoard::__print_row(f, 7, self.0[6])?;
         print_border!(f, thin);
-        __print_row(f, 8, self.0[7])?;
+        SudokuBoard::__print_row(f, 8, self.0[7])?;
         print_border!(f, thin);
-        __print_row(f, 9, self.0[8])?;
+        SudokuBoard::__print_row(f, 9, self.0[8])?;
         print_border!(f, tail);
         Ok(())
     }
