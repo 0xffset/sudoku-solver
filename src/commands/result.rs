@@ -1,4 +1,4 @@
-use crate::value::Value;
+use crate::game::Value;
 
 pub enum CommandResult {
     ParseError,

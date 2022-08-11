@@ -1,4 +1,4 @@
-use crate::board::SudokuBoard;
+use crate::SudokuBoard;
 
 use super::CommandResult;
 

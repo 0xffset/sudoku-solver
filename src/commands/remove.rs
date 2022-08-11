@@ -1,4 +1,4 @@
-use crate::results::RemoveResult;
+use crate::game::{RemoveResult, SudokuBoard};
 
 use super::{Command, CommandResult};
 
@@ -17,7 +17,7 @@ impl Command for RemoveCommand {
         "Usage: `remove <row> <col>`"
     }
 
-    fn execute(&self, board: &mut crate::board::SudokuBoard, args: Vec<&str>) -> CommandResult {
+    fn execute(&self, board: &mut SudokuBoard, args: Vec<&str>) -> CommandResult {
         let row = match args[0].parse::<usize>() {
             Ok(n) => n,
             Err(_) => {

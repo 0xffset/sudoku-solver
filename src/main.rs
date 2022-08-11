@@ -1,14 +1,12 @@
 use std::io::Write;
 
-use board::SudokuBoard;
+use crate::{
+    commands::{AddCommand, ChangeCommand, Command, RemoveCommand},
+    game::SudokuBoard,
+};
 
-use crate::commands::{AddCommand, ChangeCommand, Command, RemoveCommand};
-
-mod board;
-mod cell;
 mod commands;
-mod results;
-mod value;
+mod game;
 
 fn main() -> std::io::Result<()> {
     let args = std::env::args().collect::<Vec<_>>();
