@@ -34,15 +34,15 @@ impl Display for Value {
 impl Value {
     pub fn sup_str(&self) -> &'static str {
         match self {
-            Value::One => "1",
-            Value::Two => "2",
-            Value::Three => "3",
-            Value::Four => "4",
-            Value::Five => "5",
-            Value::Six => "6",
-            Value::Seven => "7",
-            Value::Eight => "8",
-            Value::Nine => "9",
+            Value::One => "¹",
+            Value::Two => "²",
+            Value::Three => "³",
+            Value::Four => "⁴",
+            Value::Five => "⁵",
+            Value::Six => "⁶",
+            Value::Seven => "⁷",
+            Value::Eight => "⁸",
+            Value::Nine => "⁹",
             Value::None => " ",
         }
     }

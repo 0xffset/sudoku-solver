@@ -87,7 +87,7 @@ macro_rules! print_board {
                 "{} {} {}",
                 $row[$i].possible_values[$x].sup_str(),
                 $row[$i].possible_values[$y].sup_str(),
-                $row[$i].possible_values[$z]
+                $row[$i].possible_values[$z].sup_str()
             )
         } else if $x == 3 {
             format!("  {}  ", $row[$i].value)
