@@ -46,6 +46,39 @@ impl Value {
             Value::None => " ",
         }
     }
+
+    pub fn to_usize(&self) -> usize {
+        match self {
+            Value::One => 1,
+            Value::Two => 2,
+            Value::Three => 3,
+            Value::Four => 4,
+            Value::Five => 5,
+            Value::Six => 6,
+            Value::Seven => 7,
+            Value::Eight => 8,
+            Value::Nine => 9,
+            Value::None => 0,
+        }
+    }
+}
+
+impl<S: AsRef<str>> From<S> for Value {
+    fn from(val: S) -> Self {
+        let val = val.as_ref();
+        match val {
+            "1" => Value::One,
+            "2" => Value::Two,
+            "3" => Value::Three,
+            "4" => Value::Four,
+            "5" => Value::Five,
+            "6" => Value::Six,
+            "7" => Value::Seven,
+            "8" => Value::Eight,
+            "9" => Value::Nine,
+            _ => Value::None,
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -91,6 +124,14 @@ impl Cell {
         } else {
             "     ".to_string()
         }
+    }
+
+    pub fn remove_possible_value(&mut self, val: Value) {
+        self.possible_values[val.to_usize() - 1] = Value::None;
+    }
+
+    pub fn add_possible_value(&mut self, val: Value) {
+        self.possible_values[val.to_usize() - 1] = val;
     }
 }
 

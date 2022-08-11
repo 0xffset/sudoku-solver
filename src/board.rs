@@ -11,32 +11,87 @@ impl SudokuBoard {
             panic!("Input file must have a maximum of 9 lines");
         }
 
-        let mut board = [[Cell::new(); 9]; 9];
-        for (i, line) in lines.iter().enumerate() {
+        let mut sudoku_board = SudokuBoard([[Cell::new(); 9]; 9]);
+        for (row, line) in lines.iter().enumerate() {
             let line_split = line.as_ref().split("|").collect::<Vec<&str>>();
             if line_split.len() > 9 {
                 panic!("Each line must have a maximum of 9 columns");
             }
 
-            for (j, &c) in line_split.iter().enumerate() {
-                let v = match c {
-                    "1" => Value::One,
-                    "2" => Value::Two,
-                    "3" => Value::Three,
-                    "4" => Value::Four,
-                    "5" => Value::Five,
-                    "6" => Value::Six,
-                    "7" => Value::Seven,
-                    "8" => Value::Eight,
-                    "9" => Value::Nine,
-                    _ => continue,
-                };
-                board[i][j] = Cell::from(v);
+            for (col, &c) in line_split.iter().enumerate() {
+                sudoku_board.add(row + 1, col + 1, c.trim());
             }
         }
 
-        // TODO: validate and calculate possible values for each cell
-        SudokuBoard(board)
+        sudoku_board
+    }
+
+    /// row and col bounds are 1..=9
+    pub fn add<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) {
+        let v = Value::from(val);
+        let row = row - 1;
+        let col = col - 1;
+
+        if v != Value::None && self.0[row][col].value == Value::None {
+            if self.0[row][col].possible_values.contains(&v) {
+                self.0[row][col].value = v;
+                self.0[row][col].remove_possible_value(v);
+
+                for i in 0..9 {
+                    self.0[i][col].remove_possible_value(v);
+                    self.0[row][i].remove_possible_value(v);
+                }
+                let row_off = row / 3;
+                let col_off = col / 3;
+                for row_count in 0..3 {
+                    for col_count in 0..3 {
+                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                            .remove_possible_value(v);
+                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                            .remove_possible_value(v);
+                    }
+                }
+            }
+        }
+    }
+
+    /// row and col bounds are 1..=9
+    pub fn remove(&mut self, row: usize, col: usize) -> Value {
+        let row = row - 1;
+        let col = col - 1;
+
+        if self.0[row][col].value != Value::None {
+            let v = self.0[row][col].value;
+            self.0[row][col].value = Value::None;
+            self.0[row][col].add_possible_value(v);
+
+            for i in 0..9 {
+                self.0[i][col].add_possible_value(v);
+                self.0[row][i].add_possible_value(v);
+            }
+            let row_off = row / 3;
+            let col_off = col / 3;
+            for row_count in 0..3 {
+                for col_count in 0..3 {
+                    self.0[row_off * 3 + row_count][col_off * 3 + col_count].add_possible_value(v);
+                    self.0[row_off * 3 + row_count][col_off * 3 + col_count].add_possible_value(v);
+                }
+            }
+
+            return v;
+        }
+
+        Value::None
+    }
+
+    /// row and col bounds are 1..=9
+    pub fn change<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) {
+        let v = self.remove(row, col);
+        if v != Value::None {
+            self.add(row, col, v.to_string());
+        } else {
+            self.add(row, col, val);
+        }
     }
 }
 
@@ -65,11 +120,11 @@ fn print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt:
     Ok(())
 }
 
-macro_rules! border {
+macro_rules! print_border {
     ($f:ident, head) => {
         writeln!(
             $f,
-            "╔═══a═══╤═══b═══╤═══c═══╦═══d═══╤═══e═══╤═══f═══╦═══g═══╤═══h═══╤═══i═══╗"
+            "╔═══1═══╤═══2═══╤═══3═══╦═══4═══╤═══5═══╤═══6═══╦═══7═══╤═══8═══╤═══9═══╗"
         )?;
     };
     ($f:ident, thin) => {
@@ -94,25 +149,25 @@ macro_rules! border {
 
 impl Display for SudokuBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        border!(f, head);
+        print_border!(f, head);
         print_row(f, 1, self.0[0])?;
-        border!(f, thin);
+        print_border!(f, thin);
         print_row(f, 2, self.0[1])?;
-        border!(f, thin);
+        print_border!(f, thin);
         print_row(f, 3, self.0[2])?;
-        border!(f, thick);
+        print_border!(f, thick);
         print_row(f, 4, self.0[3])?;
-        border!(f, thin);
+        print_border!(f, thin);
         print_row(f, 5, self.0[4])?;
-        border!(f, thin);
+        print_border!(f, thin);
         print_row(f, 6, self.0[5])?;
-        border!(f, thick);
+        print_border!(f, thick);
         print_row(f, 7, self.0[6])?;
-        border!(f, thin);
+        print_border!(f, thin);
         print_row(f, 8, self.0[7])?;
-        border!(f, thin);
+        print_border!(f, thin);
         print_row(f, 9, self.0[8])?;
-        border!(f, tail);
+        print_border!(f, tail);
         Ok(())
     }
 }
