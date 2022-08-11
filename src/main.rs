@@ -1,9 +1,6 @@
 use std::io::Write;
 
-use crate::{
-    commands::{AddCommand, ChangeCommand, Command, RemoveCommand},
-    game::SudokuBoard,
-};
+use crate::{commands::{CommandResult, Command, AddCommand, ChangeCommand, RemoveCommand, IndicateCommand}, game::SudokuBoard};
 
 mod commands;
 mod game;
@@ -21,6 +18,7 @@ fn main() -> std::io::Result<()> {
         Box::new(AddCommand {}),
         Box::new(ChangeCommand {}),
         Box::new(RemoveCommand {}),
+        Box::new(IndicateCommand {}),
     ];
 
     println!("{board}");
@@ -45,50 +43,59 @@ fn main() -> std::io::Result<()> {
 
         if input == "help" {
             for command in &commands {
-                println!("- {}\n{}", command.name(), command.usage());
+                println!(
+                    "`{}` - {}\n{}",
+                    command.name(),
+                    command.description(),
+                    command.usage()
+                );
             }
             continue;
         }
 
         for command in &commands {
             if command.name() == input_split[0] {
-                if command.num_args() == input_split.len() - 1 {
+                if command.num_args() >= input_split.len() - 1 {
                     match command.execute(&mut board, input_split[1..].to_vec()) {
-                        commands::CommandResult::ParseError => println!("{}", command.usage()),
+                        CommandResult::ParseError => println!("{}", command.usage()),
 
-                        commands::CommandResult::AddCommandSuccess(v, row, col) => {
+                        CommandResult::AddCommandSuccess(v, row, col) => {
                             println!("Added {v} to {:?}", (row, col));
                             println!("{board}");
                         }
-                        commands::CommandResult::AddCommandNoneValue => println!("Can't add a 0"),
-                        commands::CommandResult::AddCommandNotPossible => println!("Illegal move"),
-                        commands::CommandResult::AddCommandAlreadySet => {
+                        CommandResult::AddCommandNoneValue => println!("Can't add a 0"),
+                        CommandResult::AddCommandNotPossible => println!("Illegal move"),
+                        CommandResult::AddCommandAlreadySet => {
                             println!("To change a value, use the change command")
                         }
 
-                        commands::CommandResult::RemoveCommandSuccess(v, row, col) => {
+                        CommandResult::RemoveCommandSuccess(v, row, col) => {
                             println!("Removed {v} from {:?}", (row, col));
                             println!("{board}");
                         }
-                        commands::CommandResult::RemoveCommandNoneValue => {
+                        CommandResult::RemoveCommandNoneValue => {
                             println!("Can't remove an empty cell")
                         }
-                        commands::CommandResult::RemoveCommandImmutable => {
+                        CommandResult::RemoveCommandImmutable => {
                             println!("Can't remove an immutable cell")
                         }
 
-                        commands::CommandResult::ChangeCommandSuccess(rem_v, add_v, row, col) => {
+                        CommandResult::ChangeCommandSuccess(rem_v, add_v, row, col) => {
                             println!("Changed {rem_v} to {add_v} at {:?}", (row, col));
                             println!("{board}");
                         }
-                        commands::CommandResult::ChangeCommandNoneValue => {
+                        CommandResult::ChangeCommandNoneValue => {
                             println!("To add a value, use the add command")
                         }
-                        commands::CommandResult::ChangeCommandNotPossible => {
+                        CommandResult::ChangeCommandNotPossible => {
                             println!("Illegal move")
                         }
-                        commands::CommandResult::ChangeCommandImmutable => {
+                        CommandResult::ChangeCommandImmutable => {
                             println!("Can't change an immutable cell")
+                        }
+
+                        CommandResult::IndicateCommandSuccess(_) => {
+                            println!("{board}");
                         }
                     }
                 } else {

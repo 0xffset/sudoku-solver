@@ -7,7 +7,10 @@ use super::{
 };
 
 /// SudokuBoard.0\[row]\[col]
-pub struct SudokuBoard([[Cell; 9]; 9]);
+pub struct SudokuBoard {
+    pub board: [[Cell; 9]; 9],
+    pub indicator: bool,
+}
 
 impl SudokuBoard {
     /// Creates a new sudoku board from a vector of strings, where each string is a row of the board. <br>
@@ -17,7 +20,11 @@ impl SudokuBoard {
             panic!("Input file must have a maximum of 9 lines");
         }
 
-        let mut sudoku_board = SudokuBoard([[Cell::new(); 9]; 9]);
+        let mut sudoku_board = SudokuBoard {
+            board: [[Cell::new(); 9]; 9],
+            indicator: true,
+        };
+
         for (row, line) in lines.iter().enumerate() {
             let line_split = line.as_ref().split("|").collect::<Vec<&str>>();
             if line_split.len() > 9 {
@@ -26,7 +33,7 @@ impl SudokuBoard {
 
             for (col, &c) in line_split.iter().enumerate() {
                 sudoku_board.add(row + 1, col + 1, c.trim());
-                sudoku_board.0[row][col].set_immutable();
+                sudoku_board.board[row][col].set_immutable();
             }
         }
 
@@ -42,16 +49,16 @@ impl SudokuBoard {
 
         // don't overwrite existing values and don't set to None
         if v != Value::None {
-            if self.0[row][col].value == Value::None {
+            if self.board[row][col].value == Value::None {
                 // don't set value if not possible
-                if self.0[row][col].possible_values.contains(&v) {
-                    self.0[row][col].value = v;
-                    self.0[row][col].remove_possible_value(v);
+                if self.board[row][col].possible_values.contains(&v) {
+                    self.board[row][col].value = v;
+                    self.board[row][col].remove_possible_value(v);
 
                     // update rows and cols
                     for i in 0..9 {
-                        self.0[i][col].remove_possible_value(v);
-                        self.0[row][i].remove_possible_value(v);
+                        self.board[i][col].remove_possible_value(v);
+                        self.board[row][i].remove_possible_value(v);
                     }
 
                     // update 3x3 square
@@ -59,9 +66,9 @@ impl SudokuBoard {
                     let col_off = col / 3;
                     for row_count in 0..3 {
                         for col_count in 0..3 {
-                            self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                            self.board[row_off * 3 + row_count][col_off * 3 + col_count]
                                 .remove_possible_value(v);
-                            self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                            self.board[row_off * 3 + row_count][col_off * 3 + col_count]
                                 .remove_possible_value(v);
                         }
                     }
@@ -85,18 +92,18 @@ impl SudokuBoard {
         let col = col - 1;
 
         // don't remove if value is immutable (start value)
-        if self.0[row][col].mutable {
+        if self.board[row][col].mutable {
             // don't remove if value is None
-            if self.0[row][col].value != Value::None {
+            if self.board[row][col].value != Value::None {
                 // clear value and add it to possible values
-                let v = self.0[row][col].value;
-                self.0[row][col].value = Value::None;
-                self.0[row][col].add_possible_value(v);
+                let v = self.board[row][col].value;
+                self.board[row][col].value = Value::None;
+                self.board[row][col].add_possible_value(v);
 
                 // update rows and cols
                 for i in 0..9 {
-                    self.0[i][col].add_possible_value(v);
-                    self.0[row][i].add_possible_value(v);
+                    self.board[i][col].add_possible_value(v);
+                    self.board[row][i].add_possible_value(v);
                 }
 
                 // update 3x3 square
@@ -104,16 +111,16 @@ impl SudokuBoard {
                 let col_off = col / 3;
                 for row_count in 0..3 {
                     for col_count in 0..3 {
-                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                        self.board[row_off * 3 + row_count][col_off * 3 + col_count]
                             .add_possible_value(v);
-                        self.0[row_off * 3 + row_count][col_off * 3 + col_count]
+                        self.board[row_off * 3 + row_count][col_off * 3 + col_count]
                             .add_possible_value(v);
                     }
                 }
 
                 return RemoveResult::Removed(v);
             }
-            
+
             return RemoveResult::NoneValue;
         }
 
@@ -140,12 +147,13 @@ impl SudokuBoard {
 
     /// Returns a string representation of the possible values of a cell for the values val_off1 through val_off3. <br>
     fn __get_print_row_values(
+        &self,
         cell: Cell,
         val_off1: usize,
         val_off2: usize,
         val_off3: usize,
     ) -> String {
-        if cell.value == Value::None {
+        if cell.value == Value::None && self.indicator {
             format!(
                 "{} {} {}",
                 cell.possible_values[val_off1].sup_str(),
@@ -161,7 +169,12 @@ impl SudokuBoard {
     }
 
     /// prints a row. <br>
-    fn __print_row(f: &mut std::fmt::Formatter, i: usize, row: [Cell; 9]) -> std::fmt::Result {
+    fn __print_row(
+        &self,
+        f: &mut std::fmt::Formatter,
+        i: usize,
+        row: [Cell; 9],
+    ) -> std::fmt::Result {
         for (val_off1, val_off2, val_off3) in [(0, 1, 2), (3, 4, 5), (6, 7, 8)] {
             let border = if val_off1 == 3 {
                 format!("{}", i)
@@ -175,9 +188,9 @@ impl SudokuBoard {
                 write!(
                     f,
                     " {} │ {} │ {} ║",
-                    SudokuBoard::__get_print_row_values(row[row1], val_off1, val_off2, val_off3),
-                    SudokuBoard::__get_print_row_values(row[row2], val_off1, val_off2, val_off3),
-                    SudokuBoard::__get_print_row_values(row[row3], val_off1, val_off2, val_off3)
+                    self.__get_print_row_values(row[row1], val_off1, val_off2, val_off3),
+                    self.__get_print_row_values(row[row2], val_off1, val_off2, val_off3),
+                    self.__get_print_row_values(row[row3], val_off1, val_off2, val_off3)
                 )?;
             }
             writeln!(f)?;
@@ -217,23 +230,23 @@ macro_rules! print_border {
 impl Display for SudokuBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         print_border!(f, head);
-        SudokuBoard::__print_row(f, 1, self.0[0])?;
+        self.__print_row(f, 1, self.board[0])?;
         print_border!(f, thin);
-        SudokuBoard::__print_row(f, 2, self.0[1])?;
+        self.__print_row(f, 2, self.board[1])?;
         print_border!(f, thin);
-        SudokuBoard::__print_row(f, 3, self.0[2])?;
+        self.__print_row(f, 3, self.board[2])?;
         print_border!(f, thick);
-        SudokuBoard::__print_row(f, 4, self.0[3])?;
+        self.__print_row(f, 4, self.board[3])?;
         print_border!(f, thin);
-        SudokuBoard::__print_row(f, 5, self.0[4])?;
+        self.__print_row(f, 5, self.board[4])?;
         print_border!(f, thin);
-        SudokuBoard::__print_row(f, 6, self.0[5])?;
+        self.__print_row(f, 6, self.board[5])?;
         print_border!(f, thick);
-        SudokuBoard::__print_row(f, 7, self.0[6])?;
+        self.__print_row(f, 7, self.board[6])?;
         print_border!(f, thin);
-        SudokuBoard::__print_row(f, 8, self.0[7])?;
+        self.__print_row(f, 8, self.board[7])?;
         print_border!(f, thin);
-        SudokuBoard::__print_row(f, 9, self.0[8])?;
+        self.__print_row(f, 9, self.board[8])?;
         print_border!(f, tail);
         Ok(())
     }

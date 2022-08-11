@@ -17,6 +17,10 @@ impl Command for AddCommand {
         "Usage: `add <row> <col> <val>`"
     }
 
+    fn description(&self) -> &'static str {
+        "Adds a value to the board"
+    }
+
     fn execute(&self, board: &mut SudokuBoard, args: Vec<&str>) -> CommandResult {
         let row = match args[0].parse::<usize>() {
             Ok(n) => n,

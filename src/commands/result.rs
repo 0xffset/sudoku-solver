@@ -16,4 +16,6 @@ pub enum CommandResult {
     ChangeCommandNoneValue,
     ChangeCommandNotPossible,
     ChangeCommandImmutable,
+
+    IndicateCommandSuccess(bool),
 }
