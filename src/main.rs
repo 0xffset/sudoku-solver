@@ -31,6 +31,7 @@ fn main() -> std::io::Result<()> {
     ];
 
     println!("{board}");
+    println!("Type `help` for help");
 
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
@@ -43,6 +44,9 @@ fn main() -> std::io::Result<()> {
 
         if input == "quit" || input == "q" {
             break;
+        } else if input == "reset" {
+            board = SudokuBoard::new(Vec::<String>::new());
+            println!("{board}");
         }
 
         let input_split = input.split(" ").collect::<Vec<&str>>();
@@ -51,9 +55,11 @@ fn main() -> std::io::Result<()> {
         }
 
         if input == "help" {
+            println!("help - Shows this menu\nUsage: `help`");
+            println!("\nreset - Resets the board\nUsage: `reset`");
             for command in &commands {
                 println!(
-                    "`{}` - {}\n{}",
+                    "\n{} - {}\n{}",
                     command.name(),
                     command.description(),
                     command.usage()
