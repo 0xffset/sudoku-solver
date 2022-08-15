@@ -16,10 +16,12 @@ impl SolveCommand {
                     AddResult::Added(_) => match self.solve(board) {
                         SolveResult::Solved => return SolveResult::Solved,
                         SolveResult::Failed => {
-                            // value didn't lead to a solution, remove it from the possible values and continue with the next value.
+                            // value didn't lead to a solution, remove it and continue with the next value.
                             board.remove(row, col);
                         }
                     },
+                    // value was not possible, continue with the next value.
+                    AddResult::NotPossible => continue,
                     _ => panic!("Impossible program state"),
                 };
             }

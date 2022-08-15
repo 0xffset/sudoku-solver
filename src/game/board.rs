@@ -54,7 +54,7 @@ impl SudokuBoard {
         for row in 0..9 {
             for col in 0..9 {
                 let values = self.board[row][col].possible_values();
-                if !values.is_empty() {
+                if !values.is_empty() && self.board[row][col].value == Value::None {
                     possible_values.push(PossibleCellValues {
                         row: row + 1,
                         col: col + 1,
@@ -95,8 +95,10 @@ impl SudokuBoard {
         // don't overwrite existing values and don't set to None
         if val != Value::None {
             if self.board[row][col].value == Value::None {
-                // don't set value if not possible
-                if self.board[row][col].possible_values.contains(&val) {
+                // don't set value if not possible or if it would result in another cell having no possible values
+                if self.board[row][col].possible_values.contains(&val)
+                    && self.__value_is_removable(row, col, val)
+                {
                     self.board[row][col].value = val;
                     self.board[row][col].remove_possible_value(val);
 
@@ -134,9 +136,48 @@ impl SudokuBoard {
         AddResult::NoneValue
     }
 
+    /// Checks if removing this possible value would result in 0 possible values for any cell.
+    fn __value_is_removable(&self, row: usize, col: usize, val: Value) -> bool {
+        // check rows and cols
+        for i in 0..9 {
+            let col_possible_values = self.board[i][col].possible_values();
+            if col_possible_values.contains(&val) && col_possible_values.len() == 1 {
+                if i != row {
+                    return false;
+                }
+            }
+
+            let row_possible_values = self.board[row][i].possible_values();
+            if row_possible_values.contains(&val) && row_possible_values.len() == 1 {
+                if i != col {
+                    return false;
+                }
+            }
+        }
+
+        // check 3x3 square
+        let row_off = row / 3;
+        let col_off = col / 3;
+        for row_count in 0..3 {
+            for col_count in 0..3 {
+                let _row = row_off * 3 + row_count;
+                let _col = col_off * 3 + col_count;
+                let possible_values =
+                    self.board[_row][_col].possible_values();
+                if possible_values.contains(&val) && possible_values.len() == 1 {
+                    if _row != row || _col != col {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
     /// Checks if the value at the given row and column is possible.
     fn __value_is_possible(&self, row: usize, col: usize, val: Value) -> bool {
-        // update rows and cols
+        // check rows and cols
         for i in 0..9 {
             if self.board[i][col].value == val {
                 return false;
@@ -146,7 +187,7 @@ impl SudokuBoard {
             }
         }
 
-        // update 3x3 square
+        // check 3x3 square
         let row_off = row / 3;
         let col_off = col / 3;
         for row_count in 0..3 {

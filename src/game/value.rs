@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-#[derive(Clone, Copy, PartialEq)]
+// TODO: remove Debug
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Value {
     One,
     Two,
