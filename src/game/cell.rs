@@ -45,4 +45,20 @@ impl Cell {
             self.possible_values[val.to_usize() - 1] = val;
         }
     }
+
+    /// Returns a vector of all possible values.
+    pub fn possible_values(&self) -> Vec<Value> {
+        let mut values = Vec::new();
+
+        if self.value != Value::None {
+            return values;
+        }
+
+        for val in self.possible_values {
+            if val != Value::None {
+                values.push(val);
+            }
+        }
+        values
+    }
 }

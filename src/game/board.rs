@@ -1,15 +1,18 @@
-use std::fmt::Display;
+use std::{collections::BinaryHeap, fmt::Display};
 
 use super::{
     cell::Cell,
     results::{AddResult, ChangeResult, RemoveResult},
     value::Value,
+    PossibleCellValues,
 };
 
 /// SudokuBoard.0\[row]\[col]
 pub struct SudokuBoard {
     pub board: [[Cell; 9]; 9],
     pub indicator: bool,
+
+    possible_values: BinaryHeap<PossibleCellValues>,
 }
 
 impl SudokuBoard {
@@ -23,16 +26,17 @@ impl SudokuBoard {
         let mut sudoku_board = SudokuBoard {
             board: [[Cell::new(); 9]; 9],
             indicator: true,
+            possible_values: BinaryHeap::new(),
         };
 
         for (row, line) in lines.iter().enumerate() {
             let line_split = line.as_ref().split("|").collect::<Vec<&str>>();
             if line_split.len() > 9 {
-                panic!("Each line must have a maximum of 9 columns");
+                panic!("Error line `{row}`: Each line must have a maximum of 9 columns");
             }
 
             for (col, &c) in line_split.iter().enumerate() {
-                if let AddResult::Added(v) = sudoku_board.add(row + 1, col + 1, c.trim()) {
+                if let AddResult::Added(v) = sudoku_board.add_str(row + 1, col + 1, c.trim()) {
                     if v != Value::None {
                         sudoku_board.board[row][col].set_immutable();
                     }
@@ -40,28 +44,66 @@ impl SudokuBoard {
             }
         }
 
+        sudoku_board.update_possible_value_heap();
         sudoku_board
+    }
+
+    /// Updates the possible values binary heap.
+    fn update_possible_value_heap(&mut self) {
+        let mut possible_values = BinaryHeap::new();
+        for row in 0..9 {
+            for col in 0..9 {
+                let values = self.board[row][col].possible_values();
+                if !values.is_empty() {
+                    possible_values.push(PossibleCellValues {
+                        row: row + 1,
+                        col: col + 1,
+                        values,
+                    });
+                }
+            }
+        }
+
+        self.possible_values = possible_values;
+    }
+
+    /// Checks if the board is solved.
+    pub fn is_solved(&self) -> bool {
+        for row in 0..9 {
+            for col in 0..9 {
+                if self.board[row][col].value == Value::None {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
+    /// Adds a value in string form to the board. <br>
+    /// `row` and `col` bounds are 1..=9.
+    pub fn add_str<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) -> AddResult {
+        self.add(row, col, Value::from(val))
     }
 
     /// Adds a value to the board. <br>
     /// `row` and `col` bounds are 1..=9.
-    pub fn add<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) -> AddResult {
-        let v = Value::from(val);
+    pub fn add(&mut self, row: usize, col: usize, val: Value) -> AddResult {
         let row = row - 1;
         let col = col - 1;
 
         // don't overwrite existing values and don't set to None
-        if v != Value::None {
+        if val != Value::None {
             if self.board[row][col].value == Value::None {
                 // don't set value if not possible
-                if self.board[row][col].possible_values.contains(&v) {
-                    self.board[row][col].value = v;
-                    self.board[row][col].remove_possible_value(v);
+                if self.board[row][col].possible_values.contains(&val) {
+                    self.board[row][col].value = val;
+                    self.board[row][col].remove_possible_value(val);
 
                     // update rows and cols
                     for i in 0..9 {
-                        self.board[i][col].remove_possible_value(v);
-                        self.board[row][i].remove_possible_value(v);
+                        self.board[i][col].remove_possible_value(val);
+                        self.board[row][i].remove_possible_value(val);
                     }
 
                     // update 3x3 square
@@ -70,11 +112,17 @@ impl SudokuBoard {
                     for row_count in 0..3 {
                         for col_count in 0..3 {
                             self.board[row_off * 3 + row_count][col_off * 3 + col_count]
-                                .remove_possible_value(v);
+                                .remove_possible_value(val);
                         }
                     }
 
-                    return AddResult::Added(v);
+                    self.update_possible_value_heap();
+
+                    if !self.is_solved() {
+                        return AddResult::Added(val);
+                    } else {
+                        return AddResult::Solved;
+                    }
                 }
 
                 return AddResult::NotPossible;
@@ -145,11 +193,12 @@ impl SudokuBoard {
                         let row_offset = row_off * 3 + row_count;
                         let col_offset = col_off * 3 + col_count;
                         if self.__value_is_possible(row_offset, col_offset, v) {
-                            self.board[row_offset][col_offset]
-                                .add_possible_value(v);
+                            self.board[row_offset][col_offset].add_possible_value(v);
                         }
                     }
                 }
+
+                self.update_possible_value_heap();
 
                 return RemoveResult::Removed(v);
             }
@@ -160,22 +209,34 @@ impl SudokuBoard {
         RemoveResult::Immutable
     }
 
+    /// Changes the value in string form of a cell. <br>
+    /// row and col bounds are 1..=9.
+    pub fn change_str<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) -> ChangeResult {
+        self.change(row, col, Value::from(val))
+    }
+
     /// Changes the value of a cell. <br>
     /// row and col bounds are 1..=9.
-    pub fn change<S: AsRef<str>>(&mut self, row: usize, col: usize, val: S) -> ChangeResult {
+    pub fn change(&mut self, row: usize, col: usize, val: Value) -> ChangeResult {
         match self.remove(row, col) {
             RemoveResult::Removed(rem_v) => match self.add(row, col, val) {
                 AddResult::Added(add_v) => ChangeResult::Changed(rem_v, add_v),
                 AddResult::AlreadySet | AddResult::NoneValue => panic!("Impossible program state"),
                 AddResult::NotPossible => {
                     // if adding failed because the new value is not legal, restore the old value
-                    self.add(row, col, rem_v.to_string());
+                    self.add(row, col, rem_v);
                     ChangeResult::NotPossible
                 }
+                AddResult::Solved => ChangeResult::Solved,
             },
             RemoveResult::NoneValue => ChangeResult::NoneValue,
             RemoveResult::Immutable => ChangeResult::Immutable,
         }
+    }
+
+    /// Returns the PossibleCellValue with the least possible values.
+    pub fn pop_possible_value(&mut self) -> Option<PossibleCellValues> {
+        self.possible_values.pop()
     }
 
     /// Returns a string representation of the possible values of a cell for the values val_off1 through val_off3. <br>

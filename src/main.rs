@@ -1,3 +1,5 @@
+#![feature(binary_heap_retain)]
+
 use std::io::Write;
 
 use crate::{
@@ -75,6 +77,11 @@ fn main() -> std::io::Result<()> {
                         CommandResult::AddCommandAlreadySet => {
                             println!("To change a value, use the change command")
                         }
+                        CommandResult::AddCommandSolved => {
+                            println!("The board is solved");
+                            println!("{board}");
+                            break;
+                        }
 
                         CommandResult::RemoveCommandSuccess(v, row, col) => {
                             println!("Removed {v} from {:?}", (row, col));
@@ -99,6 +106,16 @@ fn main() -> std::io::Result<()> {
                         }
                         CommandResult::ChangeCommandImmutable => {
                             println!("Can't change an immutable cell")
+                        }
+                        CommandResult::ChangeCommandSolved => {
+                            println!("The board is solved");
+                            println!("{board}");
+                            break;
+                        }
+
+                        CommandResult::SolveCommandSuccess => {
+                            println!("{board}");
+                            break;
                         }
 
                         CommandResult::IndicateCommandSuccess(_) => {

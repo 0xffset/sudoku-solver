@@ -6,3 +6,5 @@ mod cell;
 pub use cell::Cell;
 mod results;
 pub use results::*;
+mod possible_cell_values;
+pub use possible_cell_values::PossibleCellValues;

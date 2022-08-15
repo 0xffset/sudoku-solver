@@ -1,10 +1,12 @@
 use super::value::Value;
 
+#[derive(PartialEq)]
 pub enum AddResult {
     Added(Value),
     NoneValue,
     NotPossible,
     AlreadySet,
+    Solved,
 }
 
 pub enum RemoveResult {
@@ -18,4 +20,10 @@ pub enum ChangeResult {
     NoneValue,
     NotPossible,
     Immutable,
+    Solved,
+}
+
+pub enum SolveResult {
+    Solved,
+    Failed,
 }

@@ -36,7 +36,7 @@ impl Command for AddCommand {
         };
         let val = args[2].clone();
 
-        match board.add(row, col, val) {
+        match board.add_str(row, col, val) {
             AddResult::Added(v) => {
                 return CommandResult::AddCommandSuccess(v, row, col);
             }
@@ -48,6 +48,9 @@ impl Command for AddCommand {
             }
             AddResult::AlreadySet => {
                 return CommandResult::AddCommandAlreadySet;
+            }
+            AddResult::Solved => {
+                return CommandResult::AddCommandSolved;
             }
         }
     }

@@ -36,7 +36,7 @@ impl Command for ChangeCommand {
         };
         let val = args[2].clone();
 
-        match board.change(row, col, val) {
+        match board.change_str(row, col, val) {
             ChangeResult::Changed(rem_v, add_v) => {
                 return CommandResult::ChangeCommandSuccess(rem_v, add_v, row, col);
             }
@@ -48,6 +48,9 @@ impl Command for ChangeCommand {
             }
             ChangeResult::Immutable => {
                 return CommandResult::ChangeCommandImmutable;
+            }
+            ChangeResult::Solved => {
+                return CommandResult::ChangeCommandSolved;
             }
         }
     }

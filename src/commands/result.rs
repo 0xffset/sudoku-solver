@@ -7,6 +7,7 @@ pub enum CommandResult {
     AddCommandNoneValue,
     AddCommandNotPossible,
     AddCommandAlreadySet,
+    AddCommandSolved,
 
     RemoveCommandSuccess(Value, usize, usize),
     RemoveCommandNoneValue,
@@ -16,6 +17,9 @@ pub enum CommandResult {
     ChangeCommandNoneValue,
     ChangeCommandNotPossible,
     ChangeCommandImmutable,
+    ChangeCommandSolved,
+
+    SolveCommandSuccess,
 
     IndicateCommandSuccess(bool),
 }
