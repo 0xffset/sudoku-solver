@@ -123,6 +123,10 @@ fn main() -> std::io::Result<()> {
                             println!("{board}");
                             break;
                         }
+                        CommandResult::SolveCommandFailure => {
+                            println!("The board that was supplied via a text file was in an invalid state and is not solvable!");
+                            break;
+                        }
 
                         CommandResult::IndicateCommandSuccess(_) => {
                             println!("{board}");

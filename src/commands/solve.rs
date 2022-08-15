@@ -55,8 +55,9 @@ impl Command for SolveCommand {
     fn execute(&self, board: &mut SudokuBoard, _args: Vec<&str>) -> CommandResult {
         match self.solve(board) {
             SolveResult::Solved => CommandResult::SolveCommandSuccess,
-            // impossible because the board is always in a valid state => always solvable
-            SolveResult::Failed => panic!("Impossible program state"),
+            // only possible if the supplied config is invalid, boards made at
+            // runtime are always in a valid state and thus solvable.
+            SolveResult::Failed => CommandResult::SolveCommandFailure,
         }
     }
 }

@@ -20,6 +20,7 @@ pub enum CommandResult {
     ChangeCommandSolved,
 
     SolveCommandSuccess,
+    SolveCommandFailure,
 
     IndicateCommandSuccess(bool),
 }
