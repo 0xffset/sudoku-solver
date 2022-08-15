@@ -10,3 +10,5 @@ mod result;
 pub use result::CommandResult;
 mod indicate;
 pub use indicate::IndicateCommand;
+mod solve;
+pub use solve::SolveCommand;

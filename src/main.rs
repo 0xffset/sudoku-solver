@@ -1,6 +1,12 @@
 use std::io::Write;
 
-use crate::{commands::{CommandResult, Command, AddCommand, ChangeCommand, RemoveCommand, IndicateCommand}, game::SudokuBoard};
+use crate::{
+    commands::{
+        AddCommand, ChangeCommand, Command, CommandResult, IndicateCommand, RemoveCommand,
+        SolveCommand,
+    },
+    game::SudokuBoard,
+};
 
 mod commands;
 mod game;
@@ -19,6 +25,7 @@ fn main() -> std::io::Result<()> {
         Box::new(ChangeCommand {}),
         Box::new(RemoveCommand {}),
         Box::new(IndicateCommand {}),
+        Box::new(SolveCommand {}),
     ];
 
     println!("{board}");
@@ -55,7 +62,7 @@ fn main() -> std::io::Result<()> {
 
         for command in &commands {
             if command.name() == input_split[0] {
-                if command.num_args() >= input_split.len() - 1 {
+                if command.num_args() <= input_split.len() - 1 {
                     match command.execute(&mut board, input_split[1..].to_vec()) {
                         CommandResult::ParseError => println!("{}", command.usage()),
 

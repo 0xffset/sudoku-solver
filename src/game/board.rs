@@ -32,8 +32,11 @@ impl SudokuBoard {
             }
 
             for (col, &c) in line_split.iter().enumerate() {
-                sudoku_board.add(row + 1, col + 1, c.trim());
-                sudoku_board.board[row][col].set_immutable();
+                if let AddResult::Added(v) = sudoku_board.add(row + 1, col + 1, c.trim()) {
+                    if v != Value::None {
+                        sudoku_board.board[row][col].set_immutable();
+                    }
+                }
             }
         }
 
@@ -68,8 +71,6 @@ impl SudokuBoard {
                         for col_count in 0..3 {
                             self.board[row_off * 3 + row_count][col_off * 3 + col_count]
                                 .remove_possible_value(v);
-                            self.board[row_off * 3 + row_count][col_off * 3 + col_count]
-                                .remove_possible_value(v);
                         }
                     }
 
@@ -83,6 +84,32 @@ impl SudokuBoard {
         }
 
         AddResult::NoneValue
+    }
+
+    /// Checks if the value at the given row and column is possible.
+    fn __value_is_possible(&self, row: usize, col: usize, val: Value) -> bool {
+        // update rows and cols
+        for i in 0..9 {
+            if self.board[i][col].value == val {
+                return false;
+            }
+            if self.board[row][i].value == val {
+                return false;
+            }
+        }
+
+        // update 3x3 square
+        let row_off = row / 3;
+        let col_off = col / 3;
+        for row_count in 0..3 {
+            for col_count in 0..3 {
+                if self.board[row_off * 3 + row_count][col_off * 3 + col_count].value == val {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
     /// Removes a value from the board. <br>
@@ -102,8 +129,12 @@ impl SudokuBoard {
 
                 // update rows and cols
                 for i in 0..9 {
-                    self.board[i][col].add_possible_value(v);
-                    self.board[row][i].add_possible_value(v);
+                    if self.__value_is_possible(i, col, v) {
+                        self.board[i][col].add_possible_value(v);
+                    }
+                    if self.__value_is_possible(row, i, v) {
+                        self.board[row][i].add_possible_value(v);
+                    }
                 }
 
                 // update 3x3 square
@@ -111,10 +142,12 @@ impl SudokuBoard {
                 let col_off = col / 3;
                 for row_count in 0..3 {
                     for col_count in 0..3 {
-                        self.board[row_off * 3 + row_count][col_off * 3 + col_count]
-                            .add_possible_value(v);
-                        self.board[row_off * 3 + row_count][col_off * 3 + col_count]
-                            .add_possible_value(v);
+                        let row_offset = row_off * 3 + row_count;
+                        let col_offset = col_off * 3 + col_count;
+                        if self.__value_is_possible(row_offset, col_offset, v) {
+                            self.board[row_offset][col_offset]
+                                .add_possible_value(v);
+                        }
                     }
                 }
 
