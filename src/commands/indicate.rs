@@ -4,7 +4,7 @@ pub struct IndicateCommand;
 
 impl Command for IndicateCommand {
     fn name(&self) -> &'static str {
-        "indicate"
+        "i"
     }
 
     fn num_args(&self) -> usize {
@@ -12,7 +12,7 @@ impl Command for IndicateCommand {
     }
 
     fn usage(&self) -> &'static str {
-        "Usage: `indicate`"
+        "Usage: `i`"
     }
 
     fn description(&self) -> &'static str {

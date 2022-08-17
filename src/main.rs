@@ -42,20 +42,21 @@ fn main() -> std::io::Result<()> {
         stdin.read_line(&mut input).unwrap();
         let input = input.trim();
 
-        if input == "quit" || input == "q" {
+        if input == "quit" {
             break;
         } else if input == "reset" {
             board = SudokuBoard::new(Vec::<String>::new());
             println!("{board}");
         }
 
-        let input_split = input.split(" ").collect::<Vec<&str>>();
+        let input_split = input.split("").collect::<Vec<&str>>();
+        let input_split = input_split[1..input_split.len() - 1].to_vec();
         if input_split.is_empty() {
             continue;
         }
 
-        if input == "help" {
-            println!("help - Shows this menu\nUsage: `help`");
+        if input == "h" {
+            println!("h - Shows this menu\nUsage: `h`");
             println!("\nreset - Resets the board\nUsage: `reset`");
             for command in &commands {
                 println!(
@@ -71,7 +72,9 @@ fn main() -> std::io::Result<()> {
         for command in &commands {
             if command.name() == input_split[0] {
                 if command.num_args() <= input_split.len() - 1 {
-                    match command.execute(&mut board, input_split[1..].to_vec()) {
+                    match command
+                        .execute(&mut board, input_split[1..].to_vec())
+                    {
                         CommandResult::ParseError => println!("{}", command.usage()),
 
                         CommandResult::AddCommandSuccess(v, row, col) => {

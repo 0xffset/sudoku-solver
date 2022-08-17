@@ -6,7 +6,7 @@ pub struct ChangeCommand;
 
 impl Command for ChangeCommand {
     fn name(&self) -> &'static str {
-        "change"
+        "c"
     }
 
     fn num_args(&self) -> usize {
@@ -14,7 +14,7 @@ impl Command for ChangeCommand {
     }
 
     fn usage(&self) -> &'static str {
-        "Usage: `change <row> <col> <val>`"
+        "Usage: `c<row><col><val>`"
     }
 
     fn description(&self) -> &'static str {

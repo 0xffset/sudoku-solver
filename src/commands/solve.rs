@@ -37,7 +37,7 @@ impl SolveCommand {
 
 impl Command for SolveCommand {
     fn name(&self) -> &'static str {
-        "solve"
+        "s"
     }
 
     fn num_args(&self) -> usize {
@@ -45,7 +45,7 @@ impl Command for SolveCommand {
     }
 
     fn usage(&self) -> &'static str {
-        "Usage: `solve`"
+        "Usage: `s`"
     }
 
     fn description(&self) -> &'static str {

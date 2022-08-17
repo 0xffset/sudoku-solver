@@ -6,7 +6,7 @@ pub struct AddCommand;
 
 impl Command for AddCommand {
     fn name(&self) -> &'static str {
-        "add"
+        "a"
     }
 
     fn num_args(&self) -> usize {
@@ -14,7 +14,7 @@ impl Command for AddCommand {
     }
 
     fn usage(&self) -> &'static str {
-        "Usage: `add <row> <col> <val>`"
+        "Usage: `a<row><col><val>`"
     }
 
     fn description(&self) -> &'static str {

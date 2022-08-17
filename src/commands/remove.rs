@@ -6,7 +6,7 @@ pub struct RemoveCommand;
 
 impl Command for RemoveCommand {
     fn name(&self) -> &'static str {
-        "remove"
+        "r"
     }
 
     fn num_args(&self) -> usize {
@@ -14,7 +14,7 @@ impl Command for RemoveCommand {
     }
 
     fn usage(&self) -> &'static str {
-        "Usage: `remove <row> <col>`"
+        "Usage: `r<row><col>`"
     }
 
     fn description(&self) -> &'static str {
